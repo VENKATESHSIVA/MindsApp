@@ -10,12 +10,36 @@ pipeline{
         flag = ''
     }
   stages {
+
+    stage("Maven Build"){
+          steps{
+             script{
+                flag=env.STAGE_NAME
+               }
+              sh 'mvn -B -DskipTests clean package'
+             
+          }
+        
+      }
+      stage('Maven Test'){
+            steps{
+               script{
+                  flag=env.STAGE_NAME
+            }
+                sh 'mvn test'
+            }
+            post{
+            always{
+                junit 'target/surefire-reports/*.xml'
+            }
+        }
+        }
           stage("build & SonarQube analysis") {
             steps {
                 script{
                     flag=env.STAGE_NAME
                 }
-              withSonarQubeEnv('sonar-mindapp') {
+              withSonarQubeEnv('sonar-Mindsapp') {
                 sh 'java -version'
                 sh 'mvn clean package sonar:sonar'
                  echo "========********************************\nDeploying executed successfully\n***************========"
@@ -49,12 +73,12 @@ pipeline{
                     flag=env.STAGE_NAME
                 }
                      rtUpload (
-                         serverId: 'Artifact-server',
+                         serverId: 'sample-jfrog',
                      spec :'''{
                              "files": [
                                       {
                                      "pattern": "target/*.jar",
-                                     "target": "art-mav-rep/${env.BUILD_NUMBER}/"
+                                     "target": "art-mindsapp/${env.BUILD_NUMBER}/"
                                     }
                                 ]
                             }'''
@@ -82,11 +106,11 @@ pipeline{
      
                      
             rtDownload (
-                         serverId: 'Artifact-server',
+                         serverId: 'sample-jfrog',
                      spec :'''{
                              "files": [
                                       {
-                                      "pattern": "art-mav-rep/${params.buildnumber}/*.jar",
+                                      "pattern": "art-mindsapp/${params.buildnumber}/*.jar",
                                       "target": "bazinga/"
                                     }
                                 ]
@@ -103,13 +127,7 @@ pipeline{
                 }
             }
         }
-        stage("deploy to ec2"){
-       steps{
-            sshagent(['f674a595-aa5a-4e23-90fb-eb8ee9341dfe']){
-                    sh 'scp -r target/*.jar ubuntu@54.190.49.106:/home/ubuntu/artifacts'
-        }
-       }
-     }
+        
     }
      post{
         always{
@@ -122,7 +140,7 @@ pipeline{
             echo "========pipeline executed successfully ${flag}  ========"
         }
         failure{
-             emailext attachLog: true, body: "<b> Pipeline is failed on ${flag} </b> <br>Project: ${env.JOB_NAME} <br>Build Number: ${env.BUILD_NUMBER} <br> URL of build: ${env.BUILD_URL}", compressLog: true, subject: 'Pipeline Failed in :', to: 'mukeshkousalya2k17@gmail.com '
+             emailext attachLog: true, body: "<b> Pipeline is failed on ${flag} </b> <br>Project: ${env.JOB_NAME} <br>Build Number: ${env.BUILD_NUMBER} <br> URL of build: ${env.BUILD_URL}", compressLog: true, subject: 'Pipeline Failed in :', to: 'venkateshshiva12345@gmail.com '
              echo "========pipeline execution failed  ${flag}========"
         }
     }
