@@ -127,6 +127,13 @@ pipeline{
                 }
             }
         }
+        stage("deploy to ec2"){
+       steps{
+            sshagent(['b056d3cf-80dc-4e5b-b47a-7c6353b80cbd']){
+                    sh 'scp -r target/*.jar ec2-user@ec2-34-232-214-248.compute-1.amazonaws.com:/home/ec2-user'
+        }
+       }
+     }
         
     }
      post{
